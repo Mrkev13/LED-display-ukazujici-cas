@@ -1,4 +1,4 @@
-# Projekt: Velke digitalni hodiny s LED panelem a Google kalendarem
+# Velke digitalni hodiny s LED panelem a Google kalendarem
 
 ## Cíl projektu
 Vytvoření velkých digitálních hodin, které zobrazují aktuální čas a současně běžící text s událostmi na daný den z Google Kalendáře. Výsledkem je plně funkční zařízení založené na Raspberry Pi a LED panelu s automatickým startem po zapnutí.
