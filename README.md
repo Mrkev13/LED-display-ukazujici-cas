@@ -1,61 +1,70 @@
-# Velke digitalni hodiny s LED panelem a Google kalendarem
+# Velké digitální hodiny s LED panelem a Google kalendářem
 
 ## Cíl projektu
-Vytvoření velkých digitálních hodin, které zobrazují aktuální čas a současně běžící text s událostmi na daný den z Google Kalendáře. Výsledkem je plně funkční zařízení založené na Raspberry Pi a LED panelu s automatickým startem po zapnutí.
+
+Vytvoření velkých digitálních hodin, které zobrazují aktuální čas a současně běžící text s událostmi na daný den z Google Kalendáře. Výsledkem je plně funkční zařízení založené na Raspberry Pi a LED panelu s automatickým startem po zapnutí. Události starší než hodinu se nezobrazují, nové se obnovují každých 5 minut.
 
 ---
 
 ## Použité komponenty
 
-| Komponenta                      | Popis                                                      |
-|-------------------------------|-------------------------------------------------------------|
-| Raspberry Pi 3B               | Hlavní řídicí jednotka                                      |
-| LED panel 64x32 RGB HUB75    | Displej pro zobrazování času a textu                          |
-| Adafruit RGB Matrix Bonnet       | Propojení mezi Raspberry Pi a LED panelem                  |
-| Napájecí zdroj 5V/4A         | Napájí LED panel (důležité!)                                |
-| MicroSD karta (16 GB+)        | Pro OS, knihovny, skripty                                  |
-| Pygame, Google API knihovny   | Knihovny pro grafiku a kalendář                            |
+| Komponenta                 | Popis                                     |
+| -------------------------- | ----------------------------------------- |
+| Raspberry Pi 3B            | Hlavní řídicí jednotka                    |
+| LED panel 64x32 RGB HUB75  | Displej pro zobrazování času a textu      |
+| Adafruit RGB Matrix Bonnet | Propojení mezi Raspberry Pi a LED panelem |
+| Napájecí zdroj 5V/4A       | Napájí LED panel (důležité!)              |
+| MicroSD karta (16 GB+)     | Pro OS, knihovny, skripty                 |
+| Google API knihovny        | Pro přístup ke Google Kalendáři           |
 
 ---
 
 ## Instalace a konfigurace
 
 ### 1. Instalace Raspberry Pi OS
-- Nainstalován Raspberry Pi OS Lite (64bit)
-- Povoleno SPI, SSH (pomocí `raspi-config`)
+
+* Nainstalován Raspberry Pi OS Lite (64bit)
+* Povoleno SPI, SSH (pomocí `raspi-config`)
 
 ### 2. Instalace knihoven
+
 ```bash
 sudo apt update
-sudo apt install -y python3-pip python3-pygame fonts-dejavu
-pip3 install --upgrade google-api-python-client google-auth-httplib2 google-auth-oauthlib
+sudo apt install -y python3-venv git
+python3 -m venv venv
+source venv/bin/activate
+pip install rgbmatrix google-api-python-client google-auth google-auth-oauthlib
 ```
 
 ### 3. Nastavení Google API
-- Na https://console.cloud.google.com vytvořen projekt
-- Aktivováno "Google Calendar API"
-- Vytvořen OAuth2.0 client ID (typ: Desktop)
-- Stažen soubor `credentials.json`
-- Soubor umístěn do složky se skripty na Raspberry Pi (`/home/pi/clock`)
+
+* Na [https://console.cloud.google.com](https://console.cloud.google.com) vytvořen projekt
+* Aktivováno "Google Calendar API"
+* Vytvořen OAuth2.0 client ID (typ: Desktop)
+* Stažen soubor `credentials.json`
+* Soubor umístěn do složky se skripty na Raspberry Pi (`/home/pi/clock`)
 
 ### 4. Autorizace
+
 ```bash
 cd ~/clock
 python3 get_events.py
 ```
-- Proběhl přístup přes prohlížeč
-- Vygenerován `token.json`
+
+* Proběhl přístup přes prohlížeč
+* Vygenerován `token.json`
 
 ---
 
 ## Spuštění hodinového skriptu
 
 ```bash
-python3 led_clock_simulator.py
+sudo ./venv/bin/python3 clock_with_events.py
 ```
-- Zobrazí se čas nahoře a události ze záznamů kalendáře scrollují dole
-- Události se automaticky obnovují každých 5 minut
-- Události, které už proběhly (jsou více než hodinu staré), se nezobrazují
+
+* Zobrazí se čas nahoře a události ze záznamů kalendáře scrollují dole
+* Události se automaticky obnovují každých 5 minut
+* Události, které už proběhly (jsou více než hodinu staré), se nezobrazují
 
 ---
 
@@ -68,13 +77,14 @@ sudo nano /etc/systemd/system/led-clock.service
 ```
 
 #### Obsah souboru:
+
 ```ini
 [Unit]
 Description=LED Clock with Google Calendar
 After=network.target
 
 [Service]
-ExecStart=/usr/bin/python3 /home/pi/clock/led_clock_simulator.py
+ExecStart=/home/pi/clock/venv/bin/python3 /home/pi/clock/clock_with_events.py
 WorkingDirectory=/home/pi/clock
 StandardOutput=inherit
 StandardError=inherit
@@ -86,6 +96,7 @@ WantedBy=multi-user.target
 ```
 
 ### 2. Aktivace služby
+
 ```bash
 sudo systemctl daemon-reexec
 sudo systemctl enable led-clock.service
@@ -96,7 +107,8 @@ sudo systemctl start led-clock.service
 
 ## Používané skripty
 
-### get_events.py
+### get\_events.py
+
 ```python
 from __future__ import print_function
 import datetime
@@ -107,7 +119,6 @@ from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient.discovery import build
 
 SCOPES = ['https://www.googleapis.com/auth/calendar.readonly']
-
 
 def get_today_events():
     creds = None
@@ -157,70 +168,69 @@ def get_today_events():
 
     return " | ".join(output)
 
-
 if __name__ == '__main__':
     print(get_today_events())
 ```
 
-### led_clock_simulator.py
+### clock\_with\_events.py
+
 ```python
-import pygame
 import time
-import sys
+import datetime
+import os
+import threading
+from rgbmatrix import RGBMatrix, RGBMatrixOptions, graphics
 from get_events import get_today_events
 
-pygame.init()
-screen_width, screen_height = 512, 128
-screen = pygame.display.set_mode((screen_width, screen_height))
-pygame.display.set_caption("LED Clock with Calendar")
+options = RGBMatrixOptions()
+options.rows = 32
+options.cols = 64
+options.chain_length = 1
+options.hardware_mapping = 'adafruit-hat-pwm'
+options.brightness = 70
 
-BLACK = (0, 0, 0)
-YELLOW = (255, 255, 0)
-CYAN = (0, 255, 255)
+matrix = RGBMatrix(options=options)
+canvas = matrix.CreateFrameCanvas()
 
-clock_font = pygame.font.SysFont("Courier", 64, bold=True)
-scroll_font = pygame.font.SysFont("Arial", 28, bold=False)
+font = graphics.Font()
+font.LoadFont("6x13.bdf")
+color = graphics.Color(255, 255, 0)
+event_color = graphics.Color(0, 255, 255)
 
 event_text = get_today_events()
-scroll_x = screen_width
-last_update_time = time.time()
-update_interval = 300  # 5 minut
+scroll_x = canvas.width
+last_update = time.time()
 
-fps = 30
-scroll_speed = 2
-clock = pygame.time.Clock()
+# Obnovení událostí každých 5 minut
+REFRESH_INTERVAL = 300
+
+def refresh_events():
+    global event_text, last_update, scroll_x
+    while True:
+        event_text = get_today_events()
+        scroll_x = canvas.width
+        last_update = time.time()
+        time.sleep(REFRESH_INTERVAL)
+
+threading.Thread(target=refresh_events, daemon=True).start()
 
 while True:
-    for event in pygame.event.get():
-        if event.type == pygame.QUIT:
-            pygame.quit()
-            sys.exit()
-
-    if time.time() - last_update_time > update_interval:
-        event_text = get_today_events()
-        last_update_time = time.time()
-        scroll_x = screen_width
-
-    screen.fill(BLACK)
-
-    current_time = time.strftime("%H:%M:%S")
-    time_surface = clock_font.render(current_time, True, YELLOW)
-    time_rect = time_surface.get_rect(center=(screen_width // 2, 32))
-    screen.blit(time_surface, time_rect)
-
-    scroll_surface = scroll_font.render(event_text, True, CYAN)
-    screen.blit(scroll_surface, (scroll_x, 90))
-
-    scroll_x -= scroll_speed
-    if scroll_x < -scroll_surface.get_width():
-        scroll_x = screen_width
-
-    pygame.display.flip()
-    clock.tick(fps)
+    canvas.Clear()
+    now = datetime.datetime.now()
+    time_str = now.strftime("%H:%M:%S")
+    graphics.DrawText(canvas, font, 2, 12, color, time_str)
+    graphics.DrawText(canvas, font, scroll_x, 28, event_color, event_text)
+    scroll_x -= 1
+    if scroll_x + len(event_text) * 6 < 0:
+        scroll_x = canvas.width
+    canvas = matrix.SwapOnVSync(canvas)
+    time.sleep(0.03)
 ```
 
 ---
 
 ## Shrnutí
+
 Po zapnutí Raspberry Pi se automaticky spustí digitální hodiny s LED panelem. Zobrazují aktuální čas a události z Google kalendáře pro daný den. Každých 5 minut se kalendářní události automaticky aktualizují a ty, které jsou více než hodinu staré, se již nezobrazují.
 
+> Pokud panel zobrazuje jen 4 pruhy nebo bliká, zkontroluj napětí, chlazení RPi a zkus `--led-hardware-mapping=adafruit-hat-pwm` v konfiguraci.
