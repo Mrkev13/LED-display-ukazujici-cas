@@ -11,7 +11,7 @@ Vytvoření velkých digitálních hodin, které zobrazují aktuální čas a so
 |-------------------------------|-------------------------------------------------------------|
 | Raspberry Pi 3B               | Hlavní řídicí jednotka                                      |
 | LED panel 64x32 RGB HUB75    | Displej pro zobrazování času a textu                          |
-| Adafruit RGB Matrix HAT       | Propojení mezi Raspberry Pi a LED panelem                  |
+| Adafruit RGB Matrix Bonnet       | Propojení mezi Raspberry Pi a LED panelem                  |
 | Napájecí zdroj 5V/4A         | Napájí LED panel (důležité!)                                |
 | MicroSD karta (16 GB+)        | Pro OS, knihovny, skripty                                  |
 | Pygame, Google API knihovny   | Knihovny pro grafiku a kalendář                            |
