@@ -38,10 +38,51 @@ pip install rgbmatrix google-api-python-client google-auth google-auth-oauthlib
 
 ### 3. Nastavení Google API
 
-* Vytvoř projekt na [https://console.cloud.google.com](https://console.cloud.google.com)
-* Aktivuj "Google Calendar API"
-* Vytvoř OAuth2.0 klienta (typ: Desktop)
-* Stáhni `credentials.json` a vlož do složky se skripty, např. `/home/pi/clock` (nahraď `pi` podle svého uživatelského jména)
+#### 3.1 Otevři Google Cloud Console
+
+* Jdi na stránku: [https://console.cloud.google.com](https://console.cloud.google.com)
+* Přihlas se svým Google účtem
+
+#### 3.2 Vytvoř nový projekt
+
+* V horní části klikni na název projektu
+* Klikni na „NEW PROJECT / NOVÝ PROJEKT“
+* Zadej jméno (např. LED-Hodiny) a klikni na Create
+
+#### 3.3 Zapni Google Calendar API
+
+* V levém menu klikni na „API & Services“ → „Library“ (Knihovna)
+* Vyhledej `Google Calendar API`
+* Klikni na výsledek a pak na „Enable / Povolit“
+
+#### 3.4 Vytvoř přihlašovací údaje (credentials)
+
+* V menu klikni na „API & Services“ → „Credentials“
+* Klikni na „+ CREATE CREDENTIALS“ → „OAuth client ID“
+
+!! Pokud je třeba nejdřív nastavit „OAuth consent screen“: !!
+
+* Vyber „External“
+* App name: `LED Clock`
+* E-mail: vyplň tvůj e-mail
+* Klikni stále na „Save and Continue“, nic víc nevyplňuješ
+
+#### 3.5 Vytvoř OAuth klienta
+
+* Zvol typ: „Desktop App“
+* Název: např. LED Clock
+* Klikni na „Create“
+
+#### 3.6 Stáhni credentials
+
+* Klikni na „Download JSON“ – uloží se soubor `credentials.json` (nejdříve se jmenuje jinak tak ho musíš přejmenovat!)
+
+#### 3.7 Nahraj credentials.json do Raspberry Pi
+
+* Umísti ho do složky se skripty (např. `/home/pi/clock`)
+* Pokud máš jinou cestu než `/home/pi`, uprav ji v kódu i ve službě níže
+
+---
 
 ### 4. Autorizace
 
@@ -240,3 +281,8 @@ Po zapnutí Raspberry Pi se automaticky spustí digitální hodiny s LED panelem
 > * Ověř, že síť funguje, jinak se kalendář nenačte
 
 ---
+
+
+
+
+
